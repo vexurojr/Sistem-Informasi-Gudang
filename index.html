@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Inventaris Gudang</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js untuk Logic Application State -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans text-gray-800" x-data="gudangApp()">
+
+    <!-- SCREEN LOGIN -->
+    <template x-if="!currentUser">
+        <div class="min-h-screen flex items-center justify-center bg-slate-900 p-4">
+            <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
+                <div class="text-center mb-6">
+                    <div class="bg-blue-600 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg">
+                        <i class="fa-solid me-0 fa-boxes-stacked"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Login Gudang</h2>
+                    <p class="text-sm text-gray-500">Di Buat oleh Aulia Salva Salsabila</p>
+                </div>
+
+                <form @submit.prevent="login">
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+                        <input type="text" x-model="loginForm.username" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Masukkan username" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+                        <input type="password" x-model="loginForm.password" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Masukkan password" required>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md">
+                        Masuk Sistem
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-600">
+                    <p class="font-bold mb-1">Akun Login Demo:</p>
+                    <div class="flex justify-between bg-gray-50 p-2 rounded border">
+                        <span><strong>Admin:</strong> admin / admin123</span>
+                        <button @click="autoLogin('admin')" class="text-blue-600 hover:underline">Isi Auto</button>
+                    </div>
+                    <div class="flex justify-between bg-gray-50 p-2 rounded border mt-1">
+                        <span><strong>Petugas:</strong> petugas / petugas123</span>
+                        <button @click="autoLogin('petugas')" class="text-blue-600 hover:underline">Isi Auto</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- MAIN APP INTERFACE -->
+    <template x-if="currentUser">
+        <div class="min-h-screen flex flex-col">
+            <!-- NAVBAR -->
+            <nav class="bg-slate-800 text-white shadow-lg sticky top-0 z-50">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex items-center justify-between h-16">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-boxes-stacked text-blue-400 text-xl"></i>
+                            <span class="font-bold text-lg tracking-wide">GudangWeb</span>
+                        </div>
+                        <!-- Menu Items -->
+                        <div class="hidden md:flex space-x-1">
+                            <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-slate-900 text-blue-400' : 'hover:bg-slate-700'" class="px-3 py-2 rounded-md text-sm font-medium transition">Dashboard</button>
+                            <button @click="activeTab = 'master'" :class="activeTab === 'master' ? 'bg-slate-900 text-blue-400' : 'hover:bg-slate-700'" class="px-3 py-2 rounded-md text-sm font-medium transition">Master Barang</button>
+                            <button @click="activeTab = 'masuk'" :class="activeTab === 'masuk' ? 'bg-slate-900 text-blue-400' : 'hover:bg-slate-700'" class="px-3 py-2 rounded-md text-sm font-medium transition">Barang Masuk</button>
+                            <button @click="activeTab = 'keluar'" :class="activeTab === 'keluar' ? 'bg-slate-900 text-blue-400' : 'hover:bg-slate-700'" class="px-3 py-2 rounded-md text-sm font-medium transition">Barang Keluar</button>
+                            <button @click="activeTab = 'distribusi'" :class="activeTab === 'distribusi' ? 'bg-slate-900 text-blue-400' : 'hover:bg-slate-700'" class="px-3 py-2 rounded-md text-sm font-medium transition">Distribusi</button>
+                            <button @click="activeTab = 'laporan'" :class="activeTab === 'laporan' ? 'bg-slate-900 text-blue-400' : 'hover:bg-slate-700'" class="px-3 py-2 rounded-md text-sm font-medium transition">Laporan</button>
+                        </div>
+                        <!-- User Profile & Logout -->
+                        <div class="flex items-center space-x-4">
+                            <div class="text-right text-xs">
+                                <p class="font-bold text-white" x-text="currentUser.nama"></p>
+                                <span class="bg-blue-900 text-blue-200 px-2 py-0.5 rounded-full uppercase text-[10px]" x-text="currentUser.role"></span>
+                            </div>
+                            <button @click="logout" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg text-sm transition" title="Logout">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- NAVIGATION MOBILE -->
+            <div class="md:hidden bg-slate-700 text-white flex flex-wrap justify-around p-2 text-xs">
+                <button @click="activeTab = 'dashboard'" class="p-1">Dashboard</button>
+                <button @click="activeTab = 'master'" class="p-1">Master</button>
+                <button @click="activeTab = 'masuk'" class="p-1">Masuk</button>
+                <button @click="activeTab = 'keluar'" class="p-1">Keluar</button>
+                <button @click="activeTab = 'distribusi'" class="p-1">Distribusi</button>
+                <button @click="activeTab = 'laporan'" class="p-1">Laporan</button>
+            </div>
+
+            <!-- CONTENT BODY -->
+            <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+
+                <!-- TAB 1: DASHBOARD -->
+                <div x-show="activeTab === 'dashboard'" class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h1 class="text-2xl font-bold text-gray-800">Dashboard Inventaris</h1>
+                        <button @click="resetDataSkenario" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow transition">
+                            <i class="fa-solid fa-rotate-left mr-1"></i> Reset Ke Data Awal Skenario
+                        </button>
+                    </div>
+
+                    <!-- Ringkasan Card -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Jenis Barang</p>
+                                <p class="text-2xl font-bold text-gray-800 mt-1" x-text="barangList.length"></p>
+                            </div>
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-box text-xl"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Total Stok</p>
+                                <p class="text-2xl font-bold text-emerald-600 mt-1" x-text="getTotalStok()"></p>
+                            </div>
+                            <div class="p-3 bg-emerald-50 text-emerald-600 rounded-lg"><i class="fa-solid fa-cubes text-xl"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Barang Masuk</p>
+                                <p class="text-2xl font-bold text-cyan-600 mt-1" x-text="getTotalMasuk()"></p>
+                            </div>
+                            <div class="p-3 bg-cyan-50 text-cyan-600 rounded-lg"><i class="fa-solid fa-arrow-down text-xl"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Barang Keluar</p>
+                                <p class="text-2xl font-bold text-orange-600 mt-1" x-text="getTotalKeluar()"></p>
+                            </div>
+                            <div class="p-3 bg-orange-50 text-orange-600 rounded-lg"><i class="fa-solid fa-arrow-up text-xl"></i></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold text-gray-500 uppercase">Stok Minimum</p>
+                                <p class="text-2xl font-bold text-red-600 mt-1" x-text="getStokMinimumAlert().length"></p>
+                            </div>
+                            <div class="p-3 bg-red-50 text-red-600 rounded-lg"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- Warning Stok Minimum -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-500 mr-2"></i> Peringatan Stok Minimum
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b text-xs font-semibold text-gray-500 uppercase">
+                                        <th class="p-3">Kode</th>
+                                        <th class="p-3">Nama Barang</th>
+                                        <th class="p-3">Stok Saat Ini</th>
+                                        <th class="p-3">Stok Minimum</th>
+                                        <th class="p-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-sm">
+                                    <template x-for="item in getStokMinimumAlert()" :key="item.kode">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="p-3 font-mono font-semibold" x-text="item.kode"></td>
+                                            <td class="p-3" x-text="item.nama"></td>
+                                            <td class="p-3 font-bold text-red-600" x-text="item.stok"></td>
+                                            <td class="p-3 text-gray-500" x-text="item.minStok"></td>
+                                            <td class="p-3"><span class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-medium">Restok Segera</span></td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="getStokMinimumAlert().length === 0">
+                                        <tr>
+                                            <td colspan="5" class="p-4 text-center text-gray-500 italic">Semua stok barang dalam kondisi aman.</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: MASTER BARANG -->
+                <div x-show="activeTab === 'master'" class="space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h1 class="text-2xl font-bold text-gray-800">Master Data Barang</h1>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" x-model="searchQuery" placeholder="Cari barang..." class="px-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button @click="openModalBarang()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow">
+                                <i class="fa-solid fa-plus mr-1"></i> Tambah Barang
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-800 text-white text-xs uppercase">
+                                        <th class="p-3">Kode</th>
+                                        <th class="p-3">Nama Barang</th>
+                                        <th class="p-3">Stok Saat Ini</th>
+                                        <th class="p-3">Stok Minimum</th>
+                                        <th class="p-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-sm">
+                                    <template x-for="item in filteredBarangList" :key="item.kode">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="p-3 font-mono font-bold" x-text="item.kode"></td>
+                                            <td class="p-3" x-text="item.nama"></td>
+                                            <td class="p-3 font-bold" :class="item.stok <= item.minStok ? 'text-red-600' : 'text-gray-800'" x-text="item.stok"></td>
+                                            <td class="p-3 text-gray-500" x-text="item.minStok"></td>
+                                            <td class="p-3 text-center space-x-1">
+                                                <button @click="openModalBarang(item)" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded text-xs transition">
+                                                    <i class="fa-solid fa-pen-to-square"></i> Edit
+                                                </button>
+                                                <template x-if="currentUser.role === 'admin'">
+                                                    <button @click="deleteBarang(item.kode)" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded text-xs transition">
+                                                        <i class="fa-solid fa-trash"></i> Hapus
+                                                    </button>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: BARANG MASUK -->
+                <div x-show="activeTab === 'masuk'" class="space-y-6">
+                    <h1 class="text-2xl font-bold text-gray-800">Transaksi Barang Masuk</h1>
+
+                    <!-- Form Input -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-md font-bold text-gray-700 mb-4">Catat Barang Masuk</h3>
+                        <form @submit.prevent="simpanBarangMasuk" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal</label>
+                                <input type="date" x-model="formMasuk.tanggal" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Barang</label>
+                                <select x-model="formMasuk.kode" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                                    <option value="">-- Pilih Barang --</option>
+                                    <template x-for="item in barangList" :key="item.kode">
+                                        <option :value="item.kode" x-text="`${item.kode} - ${item.nama}`"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Jumlah Masuk</label>
+                                <input type="number" min="1" x-model.number="formMasuk.jumlah" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Supplier</label>
+                                <select x-model="formMasuk.supplier" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                                    <option value="PT ATK Jaya Mandiri">PT ATK Jaya Mandiri</option>
+                                    <option value="CV Tech Printer">CV Tech Printer</option>
+                                    <option value="Griya Kertas Indo">Griya Kertas Indo</option>
+                                </select>
+                            </div>
+                            <div class="flex items-end">
+                                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg text-sm transition shadow">
+                                    <i class="fa-solid fa-plus mr-1"></i> Simpan Masuk
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Riwayat -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b font-bold text-gray-700">Riwayat Barang Masuk</div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b text-xs uppercase text-gray-500">
+                                        <th class="p-3">Tanggal</th>
+                                        <th class="p-3">Kode</th>
+                                        <th class="p-3">Nama Barang</th>
+                                        <th class="p-3">Jumlah</th>
+                                        <th class="p-3">Supplier</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-sm">
+                                    <template x-for="(tr, idx) in riwayatMasuk" :key="idx">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="p-3" x-text="tr.tanggal"></td>
+                                            <td class="p-3 font-mono font-semibold" x-text="tr.kode"></td>
+                                            <td class="p-3" x-text="getNamaBarang(tr.kode)"></td>
+                                            <td class="p-3 font-bold text-emerald-600" x-text="`+${tr.jumlah}`"></td>
+                                            <td class="p-3" x-text="tr.supplier"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: BARANG KELUAR -->
+                <div x-show="activeTab === 'keluar'" class="space-y-6">
+                    <h1 class="text-2xl font-bold text-gray-800">Transaksi Barang Keluar</h1>
+
+                    <!-- Form Input -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-md font-bold text-gray-700 mb-4">Catat Barang Keluar</h3>
+                        <form @submit.prevent="simpanBarangKeluar" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Tanggal</label>
+                                <input type="date" x-model="formKeluar.tanggal" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Pilih Barang</label>
+                                <select x-model="formKeluar.kode" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" required>
+                                    <option value="">-- Pilih Barang --</option>
+                                    <template x-for="item in barangList" :key="item.kode">
+                                        <option :value="item.kode" x-text="`${item.kode} - ${item.nama} (Stok: ${item.stok})`"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Jumlah Keluar</label>
+                                <input type="number" min="1" x-model.number="formKeluar.jumlah" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="0" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Tujuan Distribusi</label>
+                                <input type="text" x-model="formKeluar.tujuan" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Contoh: Bagian Tata Usaha" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Penerima</label>
+                                <input type="text" x-model="formKeluar.penerima" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Nama pegawai penerima" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Status Distribusi</label>
+                                <select x-model="formKeluar.status" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                                    <option value="Selesai">Selesai</option>
+                                    <option value="Terkirim">Terkirim</option>
+                                    <option value="Proses">Proses</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-3 flex justify-end">
+                                <button type="submit" class="bg-orange-600 hover:bg-orange-700 text-white font-semibold px-6 py-2 rounded-lg text-sm transition shadow">
+                                    <i class="fa-solid fa-minus mr-1"></i> Simpan Barang Keluar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Riwayat Barang Keluar -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-4 border-b font-bold text-gray-700">Riwayat Transaksi Keluar</div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 border-b text-xs uppercase text-gray-500">
+                                        <th class="p-3">Tanggal</th>
+                                        <th class="p-3">Barang</th>
+                                        <th class="p-3">Jumlah</th>
+                                        <th class="p-3">Tujuan</th>
+                                        <th class="p-3">Penerima</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-sm">
+                                    <template x-for="(tr, idx) in riwayatKeluar" :key="idx">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="p-3" x-text="tr.tanggal"></td>
+                                            <td class="p-3 font-semibold" x-text="getNamaBarang(tr.kode)"></td>
+                                            <td class="p-3 font-bold text-orange-600" x-text="`-${tr.jumlah}`"></td>
+                                            <td class="p-3" x-text="tr.tujuan"></td>
+                                            <td class="p-3" x-text="tr.penerima"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: DISTRIBUSI -->
+                <div x-show="activeTab === 'distribusi'" class="space-y-6">
+                    <h1 class="text-2xl font-bold text-gray-800">Status Distribusi Barang</h1>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-800 text-white text-xs uppercase">
+                                        <th class="p-3">Tanggal</th>
+                                        <th class="p-3">Barang</th>
+                                        <th class="p-3">Jumlah</th>
+                                        <th class="p-3">Tujuan</th>
+                                        <th class="p-3">Penerima</th>
+                                        <th class="p-3">Status Distribusi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y text-sm">
+                                    <template x-for="(tr, idx) in riwayatKeluar" :key="idx">
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="p-3" x-text="tr.tanggal"></td>
+                                            <td class="p-3 font-semibold" x-text="getNamaBarang(tr.kode)"></td>
+                                            <td class="p-3 font-bold" x-text="tr.jumlah"></td>
+                                            <td class="p-3" x-text="tr.tujuan"></td>
+                                            <td class="p-3" x-text="tr.penerima"></td>
+                                            <td class="p-3">
+                                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                                                      :class="{
+                                                        'bg-emerald-100 text-emerald-800': tr.status === 'Selesai',
+                                                        'bg-blue-100 text-blue-800': tr.status === 'Terkirim',
+                                                        'bg-amber-100 text-amber-800': tr.status === 'Proses'
+                                                      }" 
+                                                      x-text="tr.status"></span>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    <template x-if="riwayatKeluar.length === 0">
+                                        <tr>
+                                            <td colspan="6" class="p-4 text-center text-gray-500 italic">Belum ada catatan distribusi.</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: LAPORAN -->
+                <div x-show="activeTab === 'laporan'" class="space-y-6">
+                    <div class="flex justify-between items-center print:hidden">
+                        <h1 class="text-2xl font-bold text-gray-800">Laporan Inventaris</h1>
+                        <button @click="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-semibold transition shadow">
+                            <i class="fa-solid fa-print mr-1"></i> Cetak Laporan
+                        </button>
+                    </div>
+
+                    <!-- Dokumen Printable -->
+                    <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-8 print:shadow-none print:border-none print:p-0">
+                        <div class="text-center border-b pb-4">
+                            <h2 class="text-2xl font-bold uppercase tracking-wide">Laporan Inventaris & Distribusi Gudang</h2>
+                            <p class="text-sm text-gray-500">Tanggal Cetak: <span x-text="new Date().toLocaleDateString('id-ID')"></span></p>
+                        </div>
+
+                        <!-- 1. Stok Akhir -->
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-blue-600 pl-2">1. Laporan Stok Akhir Barang</h3>
+                            <table class="w-full text-left border text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr class="border-b">
+                                        <th class="p-2 border">Kode</th>
+                                        <th class="p-2 border">Nama Barang</th>
+                                        <th class="p-2 border">Stok Awal</th>
+                                        <th class="p-2 border">Total Masuk</th>
+                                        <th class="p-2 border">Total Keluar</th>
+                                        <th class="p-2 border">Stok Akhir</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="item in barangList" :key="item.kode">
+                                        <tr class="border-b">
+                                            <td class="p-2 border font-mono" x-text="item.kode"></td>
+                                            <td class="p-2 border" x-text="item.nama"></td>
+                                            <td class="p-2 border" x-text="item.stokAwal"></td>
+                                            <td class="p-2 border text-emerald-600" x-text="getSumMasukByKode(item.kode)"></td>
+                                            <td class="p-2 border text-orange-600" x-text="getSumKeluarByKode(item.kode)"></td>
+                                            <td class="p-2 border font-bold" x-text="item.stok"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 2. Barang Masuk -->
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-emerald-600 pl-2">2. Laporan Transaksi Barang Masuk</h3>
+                            <table class="w-full text-left border text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr class="border-b">
+                                        <th class="p-2 border">Tanggal</th>
+                                        <th class="p-2 border">Kode</th>
+                                        <th class="p-2 border">Nama Barang</th>
+                                        <th class="p-2 border">Jumlah</th>
+                                        <th class="p-2 border">Supplier</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(tr, idx) in riwayatMasuk" :key="idx">
+                                        <tr class="border-b">
+                                            <td class="p-2 border" x-text="tr.tanggal"></td>
+                                            <td class="p-2 border font-mono" x-text="tr.kode"></td>
+                                            <td class="p-2 border" x-text="getNamaBarang(tr.kode)"></td>
+                                            <td class="p-2 border font-bold text-emerald-600" x-text="tr.jumlah"></td>
+                                            <td class="p-2 border" x-text="tr.supplier"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- 3. Barang Keluar & Distribusi -->
+                        <div>
+                            <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-orange-600 pl-2">3. Laporan Distribusi Barang Keluar</h3>
+                            <table class="w-full text-left border text-sm">
+                                <thead class="bg-gray-100">
+                                    <tr class="border-b">
+                                        <th class="p-2 border">Tanggal</th>
+                                        <th class="p-2 border">Kode</th>
+                                        <th class="p-2 border">Nama Barang</th>
+                                        <th class="p-2 border">Jumlah</th>
+                                        <th class="p-2 border">Tujuan</th>
+                                        <th class="p-2 border">Penerima</th>
+                                        <th class="p-2 border">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(tr, idx) in riwayatKeluar" :key="idx">
+                                        <tr class="border-b">
+                                            <td class="p-2 border" x-text="tr.tanggal"></td>
+                                            <td class="p-2 border font-mono" x-text="tr.kode"></td>
+                                            <td class="p-2 border" x-text="getNamaBarang(tr.kode)"></td>
+                                            <td class="p-2 border font-bold text-orange-600" x-text="tr.jumlah"></td>
+                                            <td class="p-2 border" x-text="tr.tujuan"></td>
+                                            <td class="p-2 border" x-text="tr.penerima"></td>
+                                            <td class="p-2 border" x-text="tr.status"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+        <!-- MODAL FORM BARANG -->
+        <div x-show="showModalBarang" class="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+                <h3 class="text-lg font-bold text-gray-800" x-text="isEdit ? 'Edit Barang' : 'Tambah Barang Baru'"></h3>
+                <form @submit.prevent="saveBarang" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Kode Barang</label>
+                        <input type="text" x-model="formBarang.kode" :disabled="isEdit" class="w-full px-3 py-2 border rounded-lg text-sm disabled:bg-gray-100" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nama Barang</label>
+                        <input type="text" x-model="formBarang.nama" class="w-full px-3 py-2 border rounded-lg text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Stok Saat Ini</label>
+                        <input type="number" x-model.number="formBarang.stok" class="w-full px-3 py-2 border rounded-lg text-sm" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">Stok Minimum</label>
+                        <input type="number" x-model.number="formBarang.minStok" class="w-full px-3 py-2 border rounded-lg text-sm" required>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-2">
+                        <button type="button" @click="showModalBarang = false" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </template>
+
+    <!-- LOGIC APPLICATION -->
+    <script>
+        function gudangApp() {
+            return {
+                currentUser: null,
+                activeTab: 'dashboard',
+                searchQuery: '',
+                showModalBarang: false,
+                isEdit: false,
+
+                loginForm: { username: '', password: '' },
+                formBarang: { kode: '', nama: '', stok: 0, minStok: 10, stokAwal: 0 },
+                formMasuk: { tanggal: new Date().toISOString().split('T')[0], kode: '', jumlah: 1, supplier: 'PT ATK Jaya Mandiri' },
+                formKeluar: { tanggal: new Date().toISOString().split('T')[0], kode: '', jumlah: 1, tujuan: '', penerima: '', status: 'Selesai' },
+
+                // Data Master Barang (Default diset sesuai Skenario Kasus)
+                barangList: [],
+                riwayatMasuk: [],
+                riwayatKeluar: [],
+
+                init() {
+                    this.resetDataSkenario();
+                },
+
+                resetDataSkenario() {
+                    // Inisialisasi Data Master Barang Sesuai Kasus
+                    this.barangList = [
+                        { kode: 'BRG001', nama: 'Kertas A4', stok: 100, minStok: 20, stokAwal: 100 },
+                        { kode: 'BRG002', nama: 'Pulpen', stok: 200, minStok: 50, stokAwal: 200 },
+                        { kode: 'BRG003', nama: 'Buku Tulis', stok: 150, minStok: 30, stokAwal: 150 },
+                        { kode: 'BRG004', nama: 'Tinta Printer', stok: 30, minStok: 10, stokAwal: 30 },
+                        { kode: 'BRG005', nama: 'Map Plastik', stok: 100, minStok: 20, stokAwal: 100 }
+                    ];
+
+                    // Reset Transaksi Skenario Kasus
+                    this.riwayatMasuk = [
+                        { tanggal: '2026-03-20', kode: 'BRG001', jumlah: 50, supplier: 'PT ATK Jaya Mandiri' },
+                        { tanggal: '2026-03-20', kode: 'BRG002', jumlah: 100, supplier: 'PT ATK Jaya Mandiri' },
+                        { tanggal: '2026-03-20', kode: 'BRG004', jumlah: 10, supplier: 'CV Tech Printer' }
+                    ];
+
+                    this.riwayatKeluar = [
+                        { tanggal: '2026-03-21', kode: 'BRG001', jumlah: 30, tujuan: 'Bagian Tata Usaha', penerima: 'Staf TU', status: 'Selesai' },
+                        { tanggal: '2026-03-21', kode: 'BRG002', jumlah: 40, tujuan: 'Bagian Tata Usaha', penerima: 'Staf TU', status: 'Selesai' },
+                        { tanggal: '2026-03-22', kode: 'BRG001', jumlah: 20, tujuan: 'Laboratorium Komputer', penerima: 'Laboran', status: 'Selesai' },
+                        { tanggal: '2026-03-22', kode: 'BRG004', jumlah: 5, tujuan: 'Laboratorium Komputer', penerima: 'Laboran', status: 'Selesai' }
+                    ];
+
+                    // Hitung Ulang Stok Berdasarkan Transaksi
+                    this.recalculateStock();
+                },
+
+                recalculateStock() {
+                    this.barangList.forEach(item => {
+                        let masuk = this.getSumMasukByKode(item.kode);
+                        let keluar = this.getSumKeluarByKode(item.kode);
+                        item.stok = item.stokAwal + masuk - keluar;
+                    });
+                },
+
+                autoLogin(role) {
+                    if (role === 'admin') {
+                        this.loginForm.username = 'admin';
+                        this.loginForm.password = 'admin123';
+                    } else {
+                        this.loginForm.username = 'petugas';
+                        this.loginForm.password = 'petugas123';
+                    }
+                },
+
+                login() {
+                    if (this.loginForm.username === 'admin' && this.loginForm.password === 'admin123') {
+                        this.currentUser = { nama: 'Administrator Gudang', role: 'admin' };
+                    } else if (this.loginForm.username === 'petugas' && this.loginForm.password === 'petugas123') {
+                        this.currentUser = { nama: 'Petugas Gudang', role: 'petugas' };
+                    } else {
+                        alert('Username atau Password Salah!');
+                    }
+                },
+
+                logout() {
+                    this.currentUser = null;
+                },
+
+                get filteredBarangList() {
+                    return this.barangList.filter(b => 
+                        b.nama.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                        b.kode.toLowerCase().includes(this.searchQuery.toLowerCase())
+                    );
+                },
+
+                getNamaBarang(kode) {
+                    const item = this.barangList.find(b => b.kode === kode);
+                    return item ? item.nama : kode;
+                },
+
+                getTotalStok() {
+                    return this.barangList.reduce((acc, curr) => acc + curr.stok, 0);
+                },
+
+                getTotalMasuk() {
+                    return this.riwayatMasuk.reduce((acc, curr) => acc + curr.jumlah, 0);
+                },
+
+                getTotalKeluar() {
+                    return this.riwayatKeluar.reduce((acc, curr) => acc + curr.jumlah, 0);
+                },
+
+                getStokMinimumAlert() {
+                    return this.barangList.filter(b => b.stok <= b.minStok);
+                },
+
+                getSumMasukByKode(kode) {
+                    return this.riwayatMasuk.filter(m => m.kode === kode).reduce((acc, curr) => acc + curr.jumlah, 0);
+                },
+
+                getSumKeluarByKode(kode) {
+                    return this.riwayatKeluar.filter(k => k.kode === kode).reduce((acc, curr) => acc + curr.jumlah, 0);
+                },
+
+                openModalBarang(item = null) {
+                    if (item) {
+                        this.isEdit = true;
+                        this.formBarang = { ...item };
+                    } else {
+                        this.isEdit = false;
+                        this.formBarang = { kode: 'BRG00' + (this.barangList.length + 1), nama: '', stok: 0, minStok: 10, stokAwal: 0 };
+                    }
+                    this.showModalBarang = true;
+                },
+
+                saveBarang() {
+                    if (this.isEdit) {
+                        const idx = this.barangList.findIndex(b => b.kode === this.formBarang.kode);
+                        if (idx !== -1) {
+                            this.barangList[idx] = { ...this.formBarang };
+                        }
+                    } else {
+                        this.formBarang.stokAwal = this.formBarang.stok;
+                        this.barangList.push({ ...this.formBarang });
+                    }
+                    this.showModalBarang = false;
+                    this.recalculateStock();
+                },
+
+                deleteBarang(kode) {
+                    if (confirm('Yakin ingin menghapus barang ini?')) {
+                        this.barangList = this.barangList.filter(b => b.kode !== kode);
+                    }
+                },
+
+                simpanBarangMasuk() {
+                    this.riwayatMasuk.unshift({ ...this.formMasuk });
+                    this.recalculateStock();
+                    alert('Barang Masuk Berhasil Dicatat & Stok Bertambah!');
+                    this.formMasuk.jumlah = 1;
+                },
+
+                simpanBarangKeluar() {
+                    const item = this.barangList.find(b => b.kode === this.formKeluar.kode);
+                    if (item && item.stok < this.formKeluar.jumlah) {
+                        alert(`Stok tidak mencukupi! Stok saat ini: ${item.stok}`);
+                        return;
+                    }
+
+                    this.riwayatKeluar.unshift({ ...this.formKeluar });
+                    this.recalculateStock();
+                    alert('Distribusi Barang Keluar Berhasil & Stok Berkurang!');
+                    this.formKeluar.jumlah = 1;
+                    this.formKeluar.tujuan = '';
+                    this.formKeluar.penerima = '';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
