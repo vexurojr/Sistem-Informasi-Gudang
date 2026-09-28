@@ -38,16 +38,6 @@
                         Masuk Sistem
                     </button>
                 </form>
-
-                <div class="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-600">
-                    <p class="font-bold mb-1">Akun Login Demo:</p>
-                    <div class="flex justify-between bg-gray-50 p-2 rounded border">
-                        <span><strong>Admin:</strong> admin / admin123</span>
-                        <button @click="autoLogin('admin')" class="text-blue-600 hover:underline">Isi Auto</button>
-                    </div>
-                    <div class="flex justify-between bg-gray-50 p-2 rounded border mt-1">
-                        <span><strong>Petugas:</strong> petugas / petugas123</span>
-                        <button @click="autoLogin('petugas')" class="text-blue-600 hover:underline">Isi Auto</button>
                     </div>
                 </div>
             </div>
@@ -221,7 +211,7 @@
                                                 <button @click="openModalBarang(item)" class="bg-amber-500 hover:bg-amber-600 text-white px-2.5 py-1 rounded text-xs transition">
                                                     <i class="fa-solid fa-pen-to-square"></i> Edit
                                                 </button>
-                                                <template x-if="currentUser.role === 'admin'">
+                                                <template x-if="currentUser.role === ''">
                                                     <button @click="deleteBarang(item.kode)" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded text-xs transition">
                                                         <i class="fa-solid fa-trash"></i> Hapus
                                                     </button>
@@ -632,7 +622,7 @@
 
                 autoLogin(role) {
                     if (role === 'admin') {
-                        this.loginForm.username = 'admin';
+                        this.loginForm.username = 'aulia';
                         this.loginForm.password = 'admin123';
                     } else {
                         this.loginForm.username = 'petugas';
@@ -641,7 +631,7 @@
                 },
 
                 login() {
-                    if (this.loginForm.username === 'admin' && this.loginForm.password === 'admin123') {
+                    if (this.loginForm.username === 'aulia' && this.loginForm.password === 'admin123') {
                         this.currentUser = { nama: 'Administrator Gudang', role: 'admin' };
                     } else if (this.loginForm.username === 'petugas' && this.loginForm.password === 'petugas123') {
                         this.currentUser = { nama: 'Petugas Gudang', role: 'petugas' };
