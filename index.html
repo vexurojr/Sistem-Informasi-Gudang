@@ -587,25 +587,19 @@
                 resetDataSkenario() {
                     // Inisialisasi Data Master Barang Sesuai Kasus
                     this.barangList = [
-                        { kode: 'BRG001', nama: 'Kertas A4', stok: 100, minStok: 20, stokAwal: 100 },
-                        { kode: 'BRG002', nama: 'Pulpen', stok: 200, minStok: 50, stokAwal: 200 },
-                        { kode: 'BRG003', nama: 'Buku Tulis', stok: 150, minStok: 30, stokAwal: 150 },
-                        { kode: 'BRG004', nama: 'Tinta Printer', stok: 30, minStok: 10, stokAwal: 30 },
-                        { kode: 'BRG005', nama: 'Map Plastik', stok: 100, minStok: 20, stokAwal: 100 }
+                        { kode: 'SIGMASTOCK21', nama: 'Vga RTX 5080', stok: 100, minStok: 20, stokAwal: 100 },
+                        
                     ];
 
                     // Reset Transaksi Skenario Kasus
                     this.riwayatMasuk = [
-                        { tanggal: '2026-03-20', kode: 'BRG001', jumlah: 50, supplier: 'PT ATK Jaya Mandiri' },
-                        { tanggal: '2026-03-20', kode: 'BRG002', jumlah: 100, supplier: 'PT ATK Jaya Mandiri' },
-                        { tanggal: '2026-03-20', kode: 'BRG004', jumlah: 10, supplier: 'CV Tech Printer' }
+                        { tanggal: '2026-03-20', kode: 'SIGMASTOCK21', jumlah: 50, supplier: 'PT SIGMA BOY' },
+                        
                     ];
 
                     this.riwayatKeluar = [
-                        { tanggal: '2026-03-21', kode: 'BRG001', jumlah: 30, tujuan: 'Bagian Tata Usaha', penerima: 'Staf TU', status: 'Selesai' },
-                        { tanggal: '2026-03-21', kode: 'BRG002', jumlah: 40, tujuan: 'Bagian Tata Usaha', penerima: 'Staf TU', status: 'Selesai' },
-                        { tanggal: '2026-03-22', kode: 'BRG001', jumlah: 20, tujuan: 'Laboratorium Komputer', penerima: 'Laboran', status: 'Selesai' },
-                        { tanggal: '2026-03-22', kode: 'BRG004', jumlah: 5, tujuan: 'Laboratorium Komputer', penerima: 'Laboran', status: 'Selesai' }
+                        { tanggal: '2026-03-21', kode: 'SIGMASTOCK21', jumlah: 30, tujuan: 'Bagian Tata Usaha', penerima: 'Staf TU', status: 'Selesai' },
+                        
                     ];
 
                     // Hitung Ulang Stok Berdasarkan Transaksi
